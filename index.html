@@ -66,11 +66,10 @@
     <div id="gameContainer">
         <h1>Catch the BMN/CRO Logo</h1>
         <div id="score">Score: 0</div>
-        <div id="timer">Time: 30</div>
         <canvas id="gameCanvas" width="500" height="400"></canvas>
         <div id="leaderboard"></div>
         <button id="startButton" onclick="startGame()">Start Game</button>
-        <p style="font-size: 1em; margin-top: 10px;">Click the logo to score points before time runs out!</p>
+        <p style="font-size: 1em; margin-top: 10px;">Click or tap to make the logo jump through gaps!</p>
     </div>
 
     <script>
@@ -78,20 +77,27 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
-        const timerDisplay = document.getElementById('timer');
         const leaderboardDisplay = document.getElementById('leaderboard');
 
         // Game state
         let score = 0;
-        let timeLeft = 30;
         let gameActive = false;
         let gameStarted = false;
-        let square = { x: 200, y: 200, size: 40, targetX: 200, targetY: 200 }; // Logo properties
-        let gameInterval, timerInterval, animationFrame;
+        let bird = { x: 100, y: 200, size: 40, velocity: 0 }; // BMN/CRO logo as bird
+        let pipes = [];
+        let frameCount = 0;
+        let animationFrame;
+
+        // Constants
+        const GRAVITY = 0.5;
+        const JUMP = -10;
+        const PIPE_WIDTH = 50;
+        const PIPE_GAP = 120;
+        const PIPE_SPEED = 2;
 
         // Load assets
         const logo = new Image();
-        logo.src = 'logo.png'; // Your logo file
+        logo.src = 'logo.png'; // BMN/CRO logo
         const background = new Image();
         background.src = 'background.jpg'; // Background image
 
@@ -119,13 +125,23 @@
             }
         }
 
-        function drawLogo() {
+        function drawBird() {
             if (logo.complete && logo.naturalWidth !== 0) {
-                ctx.drawImage(logo, square.x, square.y, square.size, square.size);
+                ctx.drawImage(logo, bird.x, bird.y, bird.size, bird.size);
             } else {
                 ctx.fillStyle = 'red';
-                ctx.fillRect(square.x, square.y, square.size, square.size);
+                ctx.fillRect(bird.x, bird.y, bird.size, bird.size);
             }
+        }
+
+        function drawPipes() {
+            ctx.fillStyle = '#15803d';
+            pipes.forEach(pipe => {
+                // Top pipe
+                ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top);
+                // Bottom pipe
+                ctx.fillRect(pipe.x, pipe.top + PIPE_GAP, PIPE_WIDTH, canvas.height - pipe.top - PIPE_GAP);
+            });
         }
 
         function drawStartScreen() {
@@ -134,12 +150,7 @@
             ctx.fillStyle = '#fff';
             ctx.textAlign = 'center';
             ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 20);
-            ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 20);
-        }
-
-        function drawGame() {
-            drawBackground();
-            drawLogo();
+            ctx.fillText('Click or tap to start', canvas.width / 2, canvas.height / 2 + 20);
         }
 
         function drawGameOver() {
@@ -150,26 +161,62 @@
             ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2);
         }
 
-        // Smooth movement animation
-        function animate() {
+        // Game logic
+        function spawnPipe() {
+            const gapY = Math.random() * (canvas.height - PIPE_GAP - 100) + 50;
+            pipes.push({ x: canvas.width, top: gapY });
+        }
+
+        function updatePipes() {
+            pipes.forEach(pipe => {
+                pipe.x -= PIPE_SPEED;
+                // Score when bird passes pipe
+                if (pipe.x + PIPE_WIDTH < bird.x && !pipe.scored) {
+                    score++;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    pipe.scored = true;
+                }
+            });
+            // Remove off-screen pipes
+            pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
+        }
+
+        function checkCollision() {
+            // Canvas boundaries
+            if (bird.y < 0 || bird.y + bird.size > canvas.height) {
+                return true;
+            }
+            // Pipe collisions
+            for (let pipe of pipes) {
+                if (
+                    bird.x + bird.size > pipe.x &&
+                    bird.x < pipe.x + PIPE_WIDTH &&
+                    (bird.y < pipe.top || bird.y + bird.size > pipe.top + PIPE_GAP)
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function updateGame() {
             if (!gameActive) return;
-            square.x += (square.targetX - square.x) * 0.1;
-            square.y += (square.targetY - square.y) * 0.1;
-            drawGame();
-            animationFrame = requestAnimationFrame(animate);
-        }
-
-        function moveSquare() {
-            square.targetX = Math.random() * (canvas.width - square.size);
-            square.targetY = Math.random() * (canvas.height - square.size);
-        }
-
-        function updateTimer() {
-            timeLeft--;
-            timerDisplay.textContent = `Time: ${timeLeft}`;
-            if (timeLeft <= 0) {
+            // Update bird
+            bird.velocity += GRAVITY;
+            bird.y += bird.velocity;
+            // Update pipes
+            frameCount++;
+            if (frameCount % 90 === 0) spawnPipe();
+            updatePipes();
+            // Check collisions
+            if (checkCollision()) {
                 endGame();
             }
+            // Draw
+            drawBackground();
+            drawPipes();
+            drawBird();
+            animationFrame = requestAnimationFrame(updateGame);
         }
 
         function startGame() {
@@ -177,47 +224,45 @@
                 gameStarted = true;
                 gameActive = true;
                 score = 0;
-                timeLeft = 30;
+                bird = { x: 100, y: 200, size: 40, velocity: 0 };
+                pipes = [];
+                frameCount = 0;
                 scoreDisplay.textContent = `Score: ${score}`;
-                timerDisplay.textContent = `Time: ${timeLeft}`;
-                moveSquare();
-                gameInterval = setInterval(moveSquare, 1000);
-                timerInterval = setInterval(updateTimer, 1000);
-                animationFrame = requestAnimationFrame(animate);
                 document.getElementById('startButton').textContent = 'Restart Game';
+                animationFrame = requestAnimationFrame(updateGame);
             }
         }
 
         function endGame() {
             gameActive = false;
             gameStarted = false;
-            clearInterval(gameInterval);
-            clearInterval(timerInterval);
             cancelAnimationFrame(animationFrame);
             updateLeaderboard();
             drawGameOver();
             document.getElementById('startButton').textContent = 'Start Game';
         }
 
-        // Click handler
-        canvas.addEventListener('click', (event) => {
+        // Input handlers
+        function flap() {
+            if (gameActive) {
+                bird.velocity = JUMP;
+            }
+        }
+
+        canvas.addEventListener('click', () => {
             if (!gameStarted && !gameActive) {
                 startGame();
-                return;
+            } else {
+                flap();
             }
-            if (!gameActive) return;
-            const rect = canvas.getBoundingClientRect();
-            const clickX = event.clientX - rect.left;
-            const clickY = event.clientY - rect.top;
-            if (
-                clickX >= square.x &&
-                clickX <= square.x + square.size &&
-                clickY >= square.y &&
-                clickY <= square.y + square.size
-            ) {
-                score++;
-                scoreDisplay.textContent = `Score: ${score}`;
-                moveSquare();
+        });
+
+        canvas.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            if (!gameStarted && !gameActive) {
+                startGame();
+            } else {
+                flap();
             }
         });
 
