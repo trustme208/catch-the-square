@@ -35,7 +35,7 @@
             border-radius: 5px;
             background: #000; /* Fallback if background image fails */
         }
-        #score, #timer {
+        #score {
             font-size: 1.5em;
             margin: 10px 0;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
@@ -46,7 +46,7 @@
             max-width: 300px;
             text-align: left;
         }
-        #startButton {
+        #startButton, #pauseButton {
             padding: 12px 24px;
             font-size: 1.2em;
             background: #2563eb; /* BMN/CRO blue */
@@ -55,9 +55,9 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background 0.3s;
-            margin-top: 10px;
+            margin: 5px;
         }
-        #startButton:hover {
+        #startButton:hover, #pauseButton:hover {
             background: #1d4ed8;
         }
     </style>
@@ -69,6 +69,7 @@
         <canvas id="gameCanvas" width="500" height="400"></canvas>
         <div id="leaderboard"></div>
         <button id="startButton" onclick="startGame()">Start Game</button>
+        <button id="pauseButton" onclick="togglePause()">Pause</button>
         <p style="font-size: 1em; margin-top: 10px;">Click or tap to make the BMN/CRO logo jump through gaps!</p>
     </div>
 
@@ -78,21 +79,25 @@
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
         const leaderboardDisplay = document.getElementById('leaderboard');
+        const pauseButton = document.getElementById('pauseButton');
 
         // Game state
         let score = 0;
         let gameActive = false;
         let gameStarted = false;
+        let paused = false;
         let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 }; // Start in air
         let pipes = [];
         let frameCount = 0;
         let animationFrame;
+        let startAnimation = 0;
+        let gameOverAnimation = 0;
 
         // Constants
-        const GRAVITY = 0.3; // Gentler gravity
-        const JUMP = -12; // Stronger jump
+        const GRAVITY = 0.2; // Gentler gravity for smaller bounce
+        const JUMP = -8; // Smaller jump
         const PIPE_WIDTH = 50;
-        const PIPE_GAP = 160; // Larger gap
+        const PIPE_GAP = 200; // Larger gap
         const PIPE_SPEED = 1.5; // Slower pipes
 
         // Load assets
@@ -110,7 +115,7 @@
         function updateLeaderboard() {
             leaderboard.push(score);
             leaderboard.sort((a, b) => b - a);
-            leaderboard = leaderboard.slice(0, 5); // Top 5 scores
+            leaderboard = leaderboard.slice(0, 5);
             localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
             leaderboardDisplay.innerHTML = 'Top Scores:<br>' + leaderboard.map((s, i) => `${i + 1}. ${s}`).join('<br>');
         }
@@ -125,16 +130,16 @@
             }
         }
 
-        function drawBird() {
+        function drawBird(x, y, scale = 1) {
             if (logo.complete && logo.naturalWidth !== 0) {
                 ctx.save();
-                ctx.translate(bird.x + bird.size / 2, bird.y + bird.size / 2);
+                ctx.translate(x + bird.size / 2, y + bird.size / 2);
                 ctx.rotate(bird.velocity * 0.05); // Subtle tilt
-                ctx.drawImage(logo, -bird.size / 2, -bird.size / 2, bird.size, bird.size);
+                ctx.drawImage(logo, -bird.size / 2 * scale, -bird.size / 2 * scale, bird.size * scale, bird.size * scale);
                 ctx.restore();
             } else {
                 ctx.fillStyle = 'red';
-                ctx.fillRect(bird.x, bird.y, bird.size, bird.size);
+                ctx.fillRect(x, y, bird.size * scale, bird.size * scale);
             }
         }
 
@@ -148,22 +153,37 @@
 
         function drawStartScreen() {
             drawBackground();
-            drawBird();
+            drawBird(bird.x, bird.y, 1 + 0.1 * Math.sin(startAnimation * 0.1)); // Pulsing logo
             ctx.font = '30px Roboto';
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(startAnimation / 60, 1)})`; // Fade-in
             ctx.textAlign = 'center';
             ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 40);
             ctx.fillText('Click or tap to jump through gaps', canvas.width / 2, canvas.height / 2);
             ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 40);
+            startAnimation++;
+            if (!gameStarted) requestAnimationFrame(drawStartScreen);
         }
 
         function drawGameOver() {
             drawBackground();
+            drawBird(bird.x, bird.y + Math.sin(gameOverAnimation * 0.2) * 10, 1); // Bounce effect
             ctx.font = '30px Roboto';
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(gameOverAnimation / 60, 1)})`; // Fade-in
             ctx.textAlign = 'center';
             ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
             ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 20);
+            gameOverAnimation++;
+            if (!gameStarted) requestAnimationFrame(drawGameOver);
+        }
+
+        function drawPauseScreen() {
+            drawBackground();
+            drawPipes();
+            drawBird(bird.x, bird.y);
+            ctx.font = '30px Roboto';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.textAlign = 'center';
+            ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
         }
 
         // Game logic
@@ -201,18 +221,21 @@
         }
 
         function updateGame() {
-            if (!gameActive) return;
+            if (!gameActive || paused) {
+                if (paused) drawPauseScreen();
+                return;
+            }
             bird.velocity += GRAVITY;
             bird.y += bird.velocity;
             frameCount++;
-            if (frameCount % 120 === 0) spawnPipe(); // Less frequent pipes
+            if (frameCount % 120 === 0) spawnPipe();
             updatePipes();
             if (checkCollision()) {
                 endGame();
             }
             drawBackground();
             drawPipes();
-            drawBird();
+            drawBird(bird.x, bird.y);
             animationFrame = requestAnimationFrame(updateGame);
         }
 
@@ -220,11 +243,15 @@
             if (!gameStarted) {
                 gameStarted = true;
                 gameActive = true;
+                paused = false;
                 score = 0;
                 bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
                 pipes = [];
                 frameCount = 0;
+                startAnimation = 0;
+                gameOverAnimation = 0;
                 scoreDisplay.textContent = `Score: ${score}`;
+                pauseButton.textContent = 'Pause';
                 document.getElementById('startButton').textContent = 'Restart Game';
                 animationFrame = requestAnimationFrame(updateGame);
             }
@@ -233,15 +260,23 @@
         function endGame() {
             gameActive = false;
             gameStarted = false;
+            paused = false;
             cancelAnimationFrame(animationFrame);
             updateLeaderboard();
+            pauseButton.textContent = 'Pause';
             drawGameOver();
-            document.getElementById('startButton').textContent = 'Start Game';
+        }
+
+        function togglePause() {
+            if (!gameActive) return;
+            paused = !paused;
+            pauseButton.textContent = paused ? 'Resume' : 'Pause';
+            if (!paused) animationFrame = requestAnimationFrame(updateGame);
         }
 
         // Input handlers
         function flap() {
-            if (gameActive) {
+            if (gameActive && !paused) {
                 bird.velocity = JUMP;
             }
         }
