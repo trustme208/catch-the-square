@@ -15,7 +15,7 @@
             min-height: 100vh;
             margin: 0;
             font-family: 'Roboto', sans-serif;
-            background: linear-gradient(to bottom, #1e3a8a, #3b82f6);
+            background: linear-gradient(to bottom, #0f172a, #4f46e5); /* BMN/CRO crypto theme */
             color: #fff;
         }
         h1 {
@@ -49,7 +49,7 @@
         #startButton {
             padding: 12px 24px;
             font-size: 1.2em;
-            background: #22c55e;
+            background: #2563eb; /* BMN/CRO blue */
             color: #fff;
             border: none;
             border-radius: 5px;
@@ -58,7 +58,7 @@
             margin-top: 10px;
         }
         #startButton:hover {
-            background: #16a34a;
+            background: #1d4ed8;
         }
     </style>
 </head>
@@ -69,7 +69,7 @@
         <canvas id="gameCanvas" width="500" height="400"></canvas>
         <div id="leaderboard"></div>
         <button id="startButton" onclick="startGame()">Start Game</button>
-        <p style="font-size: 1em; margin-top: 10px;">Click or tap to make the logo jump through gaps!</p>
+        <p style="font-size: 1em; margin-top: 10px;">Click or tap to make the BMN/CRO logo jump through gaps!</p>
     </div>
 
     <script>
@@ -83,17 +83,17 @@
         let score = 0;
         let gameActive = false;
         let gameStarted = false;
-        let bird = { x: 100, y: 200, size: 40, velocity: 0 }; // BMN/CRO logo as bird
+        let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 }; // Start in air
         let pipes = [];
         let frameCount = 0;
         let animationFrame;
 
         // Constants
-        const GRAVITY = 0.5;
-        const JUMP = -10;
+        const GRAVITY = 0.3; // Gentler gravity
+        const JUMP = -12; // Stronger jump
         const PIPE_WIDTH = 50;
-        const PIPE_GAP = 120;
-        const PIPE_SPEED = 2;
+        const PIPE_GAP = 160; // Larger gap
+        const PIPE_SPEED = 1.5; // Slower pipes
 
         // Load assets
         const logo = new Image();
@@ -127,7 +127,11 @@
 
         function drawBird() {
             if (logo.complete && logo.naturalWidth !== 0) {
-                ctx.drawImage(logo, bird.x, bird.y, bird.size, bird.size);
+                ctx.save();
+                ctx.translate(bird.x + bird.size / 2, bird.y + bird.size / 2);
+                ctx.rotate(bird.velocity * 0.05); // Subtle tilt
+                ctx.drawImage(logo, -bird.size / 2, -bird.size / 2, bird.size, bird.size);
+                ctx.restore();
             } else {
                 ctx.fillStyle = 'red';
                 ctx.fillRect(bird.x, bird.y, bird.size, bird.size);
@@ -135,22 +139,22 @@
         }
 
         function drawPipes() {
-            ctx.fillStyle = '#15803d';
+            ctx.fillStyle = '#2563eb'; // BMN/CRO blue
             pipes.forEach(pipe => {
-                // Top pipe
                 ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top);
-                // Bottom pipe
                 ctx.fillRect(pipe.x, pipe.top + PIPE_GAP, PIPE_WIDTH, canvas.height - pipe.top - PIPE_GAP);
             });
         }
 
         function drawStartScreen() {
             drawBackground();
+            drawBird();
             ctx.font = '30px Roboto';
             ctx.fillStyle = '#fff';
             ctx.textAlign = 'center';
-            ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 20);
-            ctx.fillText('Click or tap to start', canvas.width / 2, canvas.height / 2 + 20);
+            ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 40);
+            ctx.fillText('Click or tap to jump through gaps', canvas.width / 2, canvas.height / 2);
+            ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 40);
         }
 
         function drawGameOver() {
@@ -158,35 +162,32 @@
             ctx.font = '30px Roboto';
             ctx.fillStyle = '#fff';
             ctx.textAlign = 'center';
-            ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2);
+            ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 20);
         }
 
         // Game logic
         function spawnPipe() {
             const gapY = Math.random() * (canvas.height - PIPE_GAP - 100) + 50;
-            pipes.push({ x: canvas.width, top: gapY });
+            pipes.push({ x: canvas.width, top: gapY, scored: false });
         }
 
         function updatePipes() {
             pipes.forEach(pipe => {
                 pipe.x -= PIPE_SPEED;
-                // Score when bird passes pipe
                 if (pipe.x + PIPE_WIDTH < bird.x && !pipe.scored) {
                     score++;
                     scoreDisplay.textContent = `Score: ${score}`;
                     pipe.scored = true;
                 }
             });
-            // Remove off-screen pipes
             pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
         }
 
         function checkCollision() {
-            // Canvas boundaries
             if (bird.y < 0 || bird.y + bird.size > canvas.height) {
                 return true;
             }
-            // Pipe collisions
             for (let pipe of pipes) {
                 if (
                     bird.x + bird.size > pipe.x &&
@@ -201,18 +202,14 @@
 
         function updateGame() {
             if (!gameActive) return;
-            // Update bird
             bird.velocity += GRAVITY;
             bird.y += bird.velocity;
-            // Update pipes
             frameCount++;
-            if (frameCount % 90 === 0) spawnPipe();
+            if (frameCount % 120 === 0) spawnPipe(); // Less frequent pipes
             updatePipes();
-            // Check collisions
             if (checkCollision()) {
                 endGame();
             }
-            // Draw
             drawBackground();
             drawPipes();
             drawBird();
@@ -224,7 +221,7 @@
                 gameStarted = true;
                 gameActive = true;
                 score = 0;
-                bird = { x: 100, y: 200, size: 40, velocity: 0 };
+                bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
                 pipes = [];
                 frameCount = 0;
                 scoreDisplay.textContent = `Score: ${score}`;
@@ -252,6 +249,8 @@
         canvas.addEventListener('click', () => {
             if (!gameStarted && !gameActive) {
                 startGame();
+            } else if (!gameActive) {
+                startGame();
             } else {
                 flap();
             }
@@ -260,6 +259,8 @@
         canvas.addEventListener('touchstart', (event) => {
             event.preventDefault();
             if (!gameStarted && !gameActive) {
+                startGame();
+            } else if (!gameActive) {
                 startGame();
             } else {
                 flap();
