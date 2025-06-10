@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catch the Square</title>
+    <title>Catch the Logo</title>
     <style>
         body {
             display: flex;
@@ -28,7 +28,7 @@
     </style>
 </head>
 <body>
-    <h1>Catch the Square</h1>
+    <h1>Catch the Logo</h1>
     <div id="score">Score: 0</div>
     <div id="timer">Time: 30</div>
     <canvas id="gameCanvas" width="500" height="400"></canvas>
@@ -42,13 +42,22 @@
         let score = 0;
         let timeLeft = 30;
         let gameActive = false;
-        let square = { x: 200, y: 200, size: 30 };
+        let square = { x: 200, y: 200, size: 30 }; // Size of the logo
         let gameInterval, timerInterval;
+
+        // Load the logo image
+        const logo = new Image();
+        logo.src = 'logo.png'; // Path to your PNG file
 
         function drawSquare() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'red';
-            ctx.fillRect(square.x, square.y, square.size, square.size);
+            if (logo.complete) {
+                ctx.drawImage(logo, square.x, square.y, square.size, square.size);
+            } else {
+                // Fallback if image hasn't loaded
+                ctx.fillStyle = 'red';
+                ctx.fillRect(square.x, square.y, square.size, square.size);
+            }
         }
 
         function moveSquare() {
@@ -105,6 +114,11 @@
                 moveSquare();
             }
         });
+
+        // Ensure the logo is loaded before starting
+        logo.onload = () => {
+            drawSquare();
+        };
     </script>
 </body>
 </html>
