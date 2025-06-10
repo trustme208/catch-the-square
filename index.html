@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Square</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #gameCanvas {
+            border: 2px solid #333;
+            background-color: #fff;
+        }
+        #score, #timer {
+            font-size: 24px;
+            margin: 10px;
+        }
+        #startButton {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Catch the Square</h1>
+    <div id="score">Score: 0</div>
+    <div id="timer">Time: 30</div>
+    <canvas id="gameCanvas" width="500" height="400"></canvas>
+    <button id="startButton" onclick="startGame()">Start Game</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let square = { x: 200, y: 200, size: 30 };
+        let gameInterval, timerInterval;
+
+        function drawSquare() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'red';
+            ctx.fillRect(square.x, square.y, square.size, square.size);
+        }
+
+        function moveSquare() {
+            square.x = Math.random() * (canvas.width - square.size);
+            square.y = Math.random() * (canvas.height - square.size);
+            drawSquare();
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerDisplay.textContent = `Time: ${timeLeft}`;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function startGame() {
+            if (!gameActive) {
+                gameActive = true;
+                score = 0;
+                timeLeft = 30;
+                scoreDisplay.textContent = `Score: ${score}`;
+                timerDisplay.textContent = `Time: ${timeLeft}`;
+                moveSquare();
+                gameInterval = setInterval(moveSquare, 1000);
+                timerInterval = setInterval(updateTimer, 1000);
+                document.getElementById('startButton').textContent = 'Restart Game';
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            gameActive = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'black';
+            ctx.fillText(`Game Over! Score: ${score}`, 100, canvas.height / 2);
+        }
+
+        canvas.addEventListener('click', (event) => {
+            if (!gameActive) return;
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+            if (
+                clickX >= square.x &&
+                clickX <= square.x + square.size &&
+                clickY >= square.y &&
+                clickY <= square.y + square.size
+            ) {
+                score++;
+                scoreDisplay.textContent = `Score: ${score}`;
+                moveSquare();
+            }
+        });
+    </script>
+</body>
+</html>
