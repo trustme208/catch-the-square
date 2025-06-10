@@ -87,10 +87,10 @@
         let gameActive = false;
         let gameStarted = false;
         let paused = false;
-        let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 }; // Start in air
+        let bird = { x: 150, y: canvas.height / 2, size: 40, velocity: 0 }; // Start in air
         let pipes = [];
         let frameCount = 0;
-        let animationFrame;
+        let animationFrame = null;
         let startAnimation = 0;
         let gameOverAnimation = 0;
 
@@ -98,8 +98,8 @@
         const GRAVITY = 0.15; // Minimal bounce
         const JUMP = -6; // Minimal jump
         const PIPE_WIDTH = 50;
-        const PIPE_GAP = 200; // Large gap
-        const PIPE_SPEED = 1.5; // Slower pipes
+        const PIPE_GAP = 220; // Larger gap for playability
+        const PIPE_SPEED = 1.5; // Consistent speed
 
         // Load assets
         const logo = new Image();
@@ -200,13 +200,12 @@
         // Game logic
         function spawnPipe() {
             const gapY = Math.random() * (canvas.height - PIPE_GAP - 100) + 50;
-            pipes.push({ x: canvas.width + 50, top: gapY, scored: false, startX: canvas.width + 50 }); // Start off-screen
+            pipes.push({ x: canvas.width, top: gapY, scored: false });
         }
 
         function updatePipes() {
             pipes.forEach(pipe => {
-                const targetX = pipe.startX - PIPE_SPEED * frameCount; // Smooth slide
-                pipe.x += (targetX - pipe.x) * 0.1; // Easing
+                pipe.x -= PIPE_SPEED; // Consistent speed
                 if (pipe.x + PIPE_WIDTH < bird.x && !pipe.scored) {
                     score++;
                     scoreDisplay.textContent = `Score: ${score}`;
@@ -241,7 +240,7 @@
             bird.velocity += GRAVITY;
             bird.y += bird.velocity;
             frameCount++;
-            if (frameCount % 120 === 0) spawnPipe();
+            if (frameCount % 150 === 0) spawnPipe(); // Less frequent pipes
             updatePipes();
             if (checkCollision()) {
                 endGame();
@@ -258,7 +257,7 @@
                 gameActive = true;
                 paused = false;
                 score = 0;
-                bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
+                bird = { x: 150, y: canvas.height / 2, size: 40, velocity: 0 };
                 pipes = [];
                 frameCount = 0;
                 startAnimation = 0;
