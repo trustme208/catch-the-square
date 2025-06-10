@@ -3,67 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catch the Logo</title>
+    <title>Catch the [Your Project Name] Logo</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom, #1e3a8a, #3b82f6);
+            color: #fff;
+        }
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+        #gameContainer {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
         }
         #gameCanvas {
-            border: 2px solid #333;
-            background-color: #fff;
+            border: 3px solid #fff;
+            border-radius: 5px;
+            background: #000; /* Fallback if background image fails */
         }
         #score, #timer {
-            font-size: 24px;
-            margin: 10px;
+            font-size: 1.5em;
+            margin: 10px 0;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        #leaderboard {
+            margin-top: 15px;
+            font-size: 1.2em;
+            max-width: 300px;
+            text-align: left;
         }
         #startButton {
-            padding: 10px 20px;
-            font-size: 18px;
+            padding: 12px 24px;
+            font-size: 1.2em;
+            background: #22c55e;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        #startButton:hover {
+            background: #16a34a;
         }
     </style>
 </head>
 <body>
-    <h1>Catch the Logo</h1>
-    <div id="score">Score: 0</div>
-    <div id="timer">Time: 30</div>
-    <canvas id="gameCanvas" width="500" height="400"></canvas>
-    <button id="startButton" onclick="startGame()">Start Game</button>
+    <div id="gameContainer">
+        <h1>Catch the [Your Project Name] Logo</h1>
+        <div id="score">Score: 0</div>
+        <div id="timer">Time: 30</div>
+        <canvas id="gameCanvas" width="500" height="400"></canvas>
+        <div id="leaderboard"></div>
+        <button id="startButton" onclick="startGame()">Start Game</button>
+        <p style="font-size: 1em; margin-top: 10px;">Click the logo to score points before time runs out!</p>
+    </div>
 
     <script>
+        // Canvas setup
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
         const timerDisplay = document.getElementById('timer');
+        const leaderboardDisplay = document.getElementById('leaderboard');
+
+        // Game state
         let score = 0;
         let timeLeft = 30;
         let gameActive = false;
-        let square = { x: 200, y: 200, size: 30 }; // Size of the logo
-        let gameInterval, timerInterval;
+        let gameStarted = false;
+        let square = { x: 200, y: 200, size: 40, targetX: 200, targetY: 200 }; // Logo properties
+        let gameInterval, timerInterval, animationFrame;
 
-        // Load the logo image
+        // Load assets
         const logo = new Image();
-        logo.src = 'logo.png'; // Path to your PNG file
+        logo.src = 'logo.png'; // Your logo file
+        const background = new Image();
+        background.src = 'background.jpg'; // Background image
 
-        function drawSquare() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (logo.complete) {
+        // Debugging asset loading
+        logo.onerror = () => console.error('Failed to load logo.png. Check file name or path.');
+        background.onerror = () => console.error('Failed to load background.jpg. Check file name or path.');
+
+        // Leaderboard
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        function updateLeaderboard() {
+            leaderboard.push(score);
+            leaderboard.sort((a, b) => b - a);
+            leaderboard = leaderboard.slice(0, 5); // Top 5 scores
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            leaderboardDisplay.innerHTML = 'Top Scores:<br>' + leaderboard.map((s, i) => `${i + 1}. ${s}`).join('<br>');
+        }
+
+        // Draw functions
+        function drawBackground() {
+            if (background.complete && background.naturalWidth !== 0) {
+                ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function drawLogo() {
+            if (logo.complete && logo.naturalWidth !== 0) {
                 ctx.drawImage(logo, square.x, square.y, square.size, square.size);
             } else {
-                // Fallback if image hasn't loaded
                 ctx.fillStyle = 'red';
                 ctx.fillRect(square.x, square.y, square.size, square.size);
             }
         }
 
+        function drawStartScreen() {
+            drawBackground();
+            ctx.font = '30px Roboto';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText('Catch the Logo!', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 20);
+        }
+
+        function drawGame() {
+            drawBackground();
+            drawLogo();
+        }
+
+        function drawGameOver() {
+            drawBackground();
+            ctx.font = '30px Roboto';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2);
+        }
+
+        // Smooth movement animation
+        function animate() {
+            if (!gameActive) return;
+            square.x += (square.targetX - square.x) * 0.1;
+            square.y += (square.targetY - square.y) * 0.1;
+            drawGame();
+            animationFrame = requestAnimationFrame(animate);
+        }
+
         function moveSquare() {
-            square.x = Math.random() * (canvas.width - square.size);
-            square.y = Math.random() * (canvas.height - square.size);
-            drawSquare();
+            square.targetX = Math.random() * (canvas.width - square.size);
+            square.targetY = Math.random() * (canvas.height - square.size);
         }
 
         function updateTimer() {
@@ -75,7 +173,8 @@
         }
 
         function startGame() {
-            if (!gameActive) {
+            if (!gameStarted) {
+                gameStarted = true;
                 gameActive = true;
                 score = 0;
                 timeLeft = 30;
@@ -84,21 +183,28 @@
                 moveSquare();
                 gameInterval = setInterval(moveSquare, 1000);
                 timerInterval = setInterval(updateTimer, 1000);
+                animationFrame = requestAnimationFrame(animate);
                 document.getElementById('startButton').textContent = 'Restart Game';
             }
         }
 
         function endGame() {
+            gameActive = false;
+            gameStarted = false;
             clearInterval(gameInterval);
             clearInterval(timerInterval);
-            gameActive = false;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = '30px Arial';
-            ctx.fillStyle = 'black';
-            ctx.fillText(`Game Over! Score: ${score}`, 100, canvas.height / 2);
+            cancelAnimationFrame(animationFrame);
+            updateLeaderboard();
+            drawGameOver();
+            document.getElementById('startButton').textContent = 'Start Game';
         }
 
+        // Click handler
         canvas.addEventListener('click', (event) => {
+            if (!gameStarted && !gameActive) {
+                startGame();
+                return;
+            }
             if (!gameActive) return;
             const rect = canvas.getBoundingClientRect();
             const clickX = event.clientX - rect.left;
@@ -115,10 +221,11 @@
             }
         });
 
-        // Ensure the logo is loaded before starting
-        logo.onload = () => {
-            drawSquare();
+        // Initialize
+        logo.onload = background.onload = () => {
+            drawStartScreen();
         };
+        updateLeaderboard();
     </script>
 </body>
 </html>
