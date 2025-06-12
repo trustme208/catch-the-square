@@ -134,15 +134,17 @@
         // Game state
         let score = 0;
         let gameActive = false;
+        let gameStarted = false;
         let paused = false;
+        let startAnimation = 0;
         let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
         let pipes = [];
         let frameCount = 0;
         let animationFrame;
-        let gameStarted = false;
         let gameOverAnimation = 0;
         let payoutSubmitted = false;
         let bgX = 0;
+        let assetsLoaded = 0;
 
         // Constants
         const GRAVITY = 0.15;
@@ -154,10 +156,10 @@
         const BG_SPEED = 0.5;
         const BG_WIDTH = 711; // Scaled: 1920 * 400 / 1080
 
-        // GitHub API config (replace these)
-        const GITHUB_TOKEN = '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'; // Securely replace
-        const REPO_OWNER = 'trustme208'; // Your GitHub username
-        const REPO_NAME = 'catch-the-square'; // Your repository name
+        // GitHub API config
+        const GITHUB_TOKEN = 'YOUR_NEW_PERSONAL_ACCESS_TOKEN'; // REPLACE with new token
+        const REPO_OWNER = 'trustme208';
+        const REPO_NAME = 'catch-the-square';
         const BRANCH = 'payouts';
         const FILE_PATH = 'payouts.json';
 
@@ -167,8 +169,21 @@
         const background = new Image();
         background.src = 'background.jpg';
 
-        logo.onerror = () => console.error('Failed to load logo.png.');
-        background.onerror = () => console.error('Failed to load background.jpg.');
+        // Asset error handling
+        logo.onerror = () => {
+            console.error('Failed to load logo.png. Check file path or name.');
+            assetsLoaded++;
+            if (assetsLoaded === 2) drawStartScreen();
+        };
+        background.onerror = () => {
+            console.error('Failed to load background.jpg. Check file path or name.');
+            assetsLoaded++;
+            if (assetsLoaded === 2) drawStartScreen();
+        };
+        logo.onload = background.onload = () => {
+            assetsLoaded++;
+            if (assetsLoaded === 2) drawStartScreen();
+        };
 
         // Leaderboard
         let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
@@ -177,18 +192,18 @@
             leaderboard.sort((a, b) => b - a);
             leaderboard = leaderboard.slice(0, 5);
             localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-            leaderboardDisplay();
+            renderLeaderboard();
         }
 
-        function leaderboardDisplay() {
+        function renderLeaderboard() {
             leaderboardDisplay.innerHTML = 'Top Scores:<br>' + leaderboard.map((s, i) => `${i + 1}. ${s}`).join('<br>');
         }
 
         // Draw functions
         function drawBackground() {
             if (background.complete && background.naturalWidth !== 0) {
-                ctx.drawImage(background, bgX, 0, BG_WIDTH, canvas.height, 0, 0, BG_WIDTH, canvas.height);
-                ctx.drawImage(background, bgX + BG_WIDTH,-liter, bgX, 0, BG_WIDTH, canvas.height, BG_WIDTH, 0, BG_WIDTH, canvas.height);
+                ctx.drawImage(background, bgX, 0, BG_WIDTH, canvas.height);
+                ctx.drawImage(background, bgX + BG_WIDTH, 0, BG_WIDTH, canvas.height);
             } else {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -220,7 +235,7 @@
                 gradient.addColorStop(1, '#60a5fa');
                 ctx.fillStyle = gradient;
                 ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top + yOffset);
-                ctx.fillRect(pipe.x, pipe.top + PIPE_GAP + yOffset, PIPE_WIDTH, canvas.height - pipe.top - pipe.height);
+                ctx.fillRect(pipe.x, pipe.top + PIPE_GAP + yOffset, PIPE_WIDTH, canvas.height - pipe.top - PIPE_GAP);
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.fillRect(pipe.x + 5, 0, 10, pipe.top + yOffset);
                 ctx.fillRect(pipe.x + 5, pipe.top + PIPE_GAP + yOffset, 10, canvas.height - pipe.top - PIPE_GAP);
@@ -228,6 +243,7 @@
         }
 
         function drawStartScreen() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
             drawBird(bird.x, bird.y, 1 + 0.1 * Math.sin(startAnimation * 0.1));
             ctx.font = '40px Caveat';
@@ -235,12 +251,13 @@
             ctx.textAlign = 'center';
             ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 40);
             ctx.fillText('Click or tap to jump through gaps', canvas.width / 2, canvas.height / 2);
-            ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 2 + 40);
+            ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 40);
             startAnimation++;
             if (!gameStarted) requestAnimationFrame(drawStartScreen);
         }
 
         function drawGameOver() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
             drawBird(bird.x, bird.y + Math.sin(gameOverAnimation * 0.2) * 10, 1);
             ctx.font = '40px Caveat';
@@ -256,6 +273,7 @@
         }
 
         function drawPauseScreen() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
             drawPipes();
             drawBird(bird.x, bird.y);
@@ -276,7 +294,7 @@
                 payoutMessage.textContent = 'Please check the CAPTCHA!';
                 return;
             }
-            if (!/^^0x[a-fA-F0-9]{40}$/.test(address)) {
+            if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
                 payoutMessage.textContent = 'Invalid wallet address!';
                 return;
             }
@@ -306,6 +324,11 @@
                     const fileData = await getResponse.json();
                     content = atob(fileData.content);
                     sha = fileData.sha;
+                } else if (getResponse.status === 404) {
+                    // File doesn't exist, initialize it
+                    console.log('payouts.json not found, creating new file');
+                } else {
+                    throw new Error(`GitHub API error: ${getResponse.statusText}`);
                 }
 
                 // Append new payout
@@ -313,7 +336,7 @@
                 payouts.push(payoutData);
                 const newContent = btoa(JSON.stringify(payouts, null, 2));
 
-                // Update payouts.json
+                // Update or create payouts.json
                 const putResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
                     method: 'PUT',
                     headers: {
@@ -325,7 +348,7 @@
                         message: `Add payout for ${address}`,
                         content: newContent,
                         branch: BRANCH,
-                        sha: sha
+                        sha: sha // Omit sha if creating new file
                     })
                 });
 
@@ -387,6 +410,7 @@
             if (frameCount % 150 === 0) spawnPipe();
             updatePipes();
             if (checkCollision()) endGame();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
             drawPipes();
             drawBird(bird.x, bird.y);
@@ -453,8 +477,7 @@
         });
 
         // Initialize
-        logo.onload = background.onload = () => drawStartScreen();
-        updateLeaderboard();
+        renderLeaderboard();
     </script>
 </body>
 </html>
