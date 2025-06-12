@@ -105,12 +105,12 @@
         <div id="leaderboard"></div>
         <button id="startButton" onclick="startGame()">Start Game</button>
         <button id="pauseButton" onclick="togglePause()">Pause</button>
-        <p style="font-size: 1.2em; margin-top: 10px;">Click or tap to make the logo jump through gaps!</p>
+        <p style="font-size: 1.2em; margin-top: 10px;">Click or tap to make the BMN/CRO logo jump through gaps!</p>
         <div id="payoutForm">
             <p>Earn 1 BMN per score point!</p>
             <p>Your score: <span id="finalScore"></span> | Payout: <span id="payoutAmount"></span> BMN</p>
             <input type="text" id="walletAddress" placeholder="Enter wallet address (0x...)">
-            <label><input type="checkbox" id="checkbox"> I'm not a bot</label>
+            <label><input type="checkbox" id="captcha"> I'm not a bot</label>
             <button id="submitButton" onclick="submitPayout()">Claim Payout</button>
             <p id="payoutMessage"></p>
         </div>
@@ -127,20 +127,19 @@
         const finalScore = document.getElementById('finalScore');
         const payoutAmount = document.getElementById('payoutAmount');
         const walletAddressInput = document.getElementById('walletAddress');
-        const captcha = document.getElementById('checkbox');
+        const captcha = document.getElementById('captcha');
         const submitButton = document.getElementById('submitButton');
         const payoutMessage = document.getElementById('payoutMessage');
 
         // Game state
         let score = 0;
         let gameActive = false;
-        let gameStarted = false;
         let paused = false;
         let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
         let pipes = [];
         let frameCount = 0;
         let animationFrame;
-        let startAnimation = 0;
+        let gameStarted = false;
         let gameOverAnimation = 0;
         let payoutSubmitted = false;
         let bgX = 0;
@@ -153,10 +152,14 @@
         const PIPE_SPEED = 1.5;
         const PAYOUT_RATE = 1;
         const BG_SPEED = 0.5;
-        const BG_WIDTH = 711; // 1920 * 400 / 1080
+        const BG_WIDTH = 711; // Scaled: 1920 * 400 / 1080
 
-        // Backend URL (replace with your deployed server URL)
-        const BACKEND_URL = 'http://localhost:3000/payout';
+        // GitHub API config (replace these)
+        const GITHUB_TOKEN = 'your-personal-access-token'; // Securely replace
+        const REPO_OWNER = 'your-username'; // Your GitHub username
+        const REPO_NAME = 'your-repo'; // Your repository name
+        const BRANCH = 'payouts';
+        const FILE_PATH = 'payouts.json';
 
         // Load assets
         const logo = new Image();
@@ -174,6 +177,10 @@
             leaderboard.sort((a, b) => b - a);
             leaderboard = leaderboard.slice(0, 5);
             localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            leaderboardDisplay();
+        }
+
+        function leaderboardDisplay() {
             leaderboardDisplay.innerHTML = 'Top Scores:<br>' + leaderboard.map((s, i) => `${i + 1}. ${s}`).join('<br>');
         }
 
@@ -181,7 +188,7 @@
         function drawBackground() {
             if (background.complete && background.naturalWidth !== 0) {
                 ctx.drawImage(background, bgX, 0, BG_WIDTH, canvas.height, 0, 0, BG_WIDTH, canvas.height);
-                ctx.drawImage(background, bgX + BG_WIDTH, 0, BG_WIDTH, canvas.height, BG_WIDTH, 0, BG_WIDTH, canvas.height);
+                ctx.drawImage(background, bgX + BG_WIDTH,-liter, bgX, 0, BG_WIDTH, canvas.height, BG_WIDTH, 0, BG_WIDTH, canvas.height);
             } else {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -213,202 +220,3 @@
                 gradient.addColorStop(1, '#60a5fa');
                 ctx.fillStyle = gradient;
                 ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top + yOffset);
-                ctx.fillRect(pipe.x, pipe.top + PIPE_GAP + yOffset, PIPE_WIDTH, canvas.height - pipe.top - PIPE_GAP);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.fillRect(pipe.x + 5, 0, 10, pipe.top + yOffset);
-                ctx.fillRect(pipe.x + 5, pipe.top + PIPE_GAP + yOffset, 10, canvas.height - pipe.top - PIPE_GAP);
-            });
-        }
-
-        function drawStartScreen() {
-            drawBackground();
-            drawBird(bird.x, bird.y, 1 + 0.1 * Math.sin(startAnimation * 0.1));
-            ctx.font = '40px Caveat';
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(startAnimation / 60, 1)})`;
-            ctx.textAlign = 'center';
-            ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 40);
-            ctx.fillText('Click or tap to jump through gaps', canvas.width / 2, canvas.height / 2);
-            ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 40);
-            startAnimation++;
-            if (!gameStarted) requestAnimationFrame(drawStartScreen);
-        }
-
-        function drawGameOver() {
-            drawBackground();
-            drawBird(bird.x, bird.y + Math.sin(gameOverAnimation * 0.2) * 10, 1);
-            ctx.font = '40px Caveat';
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(gameOverAnimation / 60, 1)})`;
-            ctx.textAlign = 'center';
-            ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
-            ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 20);
-            payoutForm.style.display = 'block';
-            finalScore.textContent = score;
-            payoutAmount.textContent = (score * PAYOUT_RATE).toFixed(2);
-            gameOverAnimation++;
-            if (!gameStarted) requestAnimationFrame(drawGameOver);
-        }
-
-        function drawPauseScreen() {
-            drawBackground();
-            drawPipes();
-            drawBird(bird.x, bird.y);
-            ctx.font = '40px Caveat';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.textAlign = 'center';
-            ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
-        }
-
-        // Payout logic
-        async function submitPayout() {
-            if (payoutSubmitted) {
-                payoutMessage.textContent = 'Payout already submitted!';
-                return;
-            }
-            const address = walletAddressInput.value.trim();
-            if (!captcha.checked) {
-                payoutMessage.textContent = 'Please check the CAPTCHA!';
-                return;
-            }
-            if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-                payoutMessage.textContent = 'Invalid wallet address!';
-                return;
-            }
-            payoutSubmitted = true;
-            submitButton.disabled = true;
-            payoutMessage.textContent = 'Submitting payout request...';
-
-            try {
-                const response = await fetch(BACKEND_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ address, score, payout: score * PAYOUT_RATE, currency: 'BMN' })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    payoutMessage.textContent = data.message || 'Payout request submitted!';
-                } else {
-                    payoutMessage.textContent = data.message || 'Error submitting payout!';
-                    payoutSubmitted = false;
-                    submitButton.disabled = false;
-                }
-            } catch (error) {
-                payoutMessage.textContent = 'Network error! Please try again.';
-                console.error('Payout submission error:', error);
-                payoutSubmitted = false;
-                submitButton.disabled = false;
-            }
-        }
-
-        // Game logic
-        function spawnPipe() {
-            const gapY = Math.random() * (canvas.height - PIPE_GAP - 100) + 50;
-            pipes.push({ x: canvas.width, top: gapY, scored: false });
-        }
-
-        function updatePipes() {
-            pipes.forEach(pipe => {
-                pipe.x -= PIPE_SPEED;
-                if (pipe.x + PIPE_WIDTH < bird.x && !pipe.scored) {
-                    score++;
-                    scoreDisplay.textContent = `Score: ${score}`;
-                    pipe.scored = true;
-                }
-            });
-            pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
-        }
-
-        function checkCollision() {
-            if (bird.y < 0 || bird.y + bird.size > canvas.height) return true;
-            for (let pipe of pipes) {
-                const yOffset = Math.sin((frameCount + pipe.x) * 0.05) * 10;
-                if (
-                    bird.x + bird.size > pipe.x &&
-                    bird.x < pipe.x + PIPE_WIDTH &&
-                    (bird.y < pipe.top + yOffset || bird.y + bird.size > pipe.top + PIPE_GAP + yOffset)
-                ) return true;
-            }
-            return false;
-        }
-
-        function updateGame() {
-            if (!gameActive || paused) {
-                if (paused) drawPauseScreen();
-                return;
-            }
-            bird.velocity += GRAVITY;
-            bird.y += bird.velocity;
-            frameCount++;
-            if (frameCount % 150 === 0) spawnPipe();
-            updatePipes();
-            if (checkCollision()) endGame();
-            drawBackground();
-            drawPipes();
-            drawBird(bird.x, bird.y);
-            animationFrame = requestAnimationFrame(updateGame);
-        }
-
-        function startGame() {
-            if (!gameStarted) {
-                gameStarted = true;
-                gameActive = true;
-                paused = false;
-                score = 0;
-                bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
-                pipes = [];
-                frameCount = 0;
-                startAnimation = 0;
-                gameOverAnimation = 0;
-                payoutSubmitted = false;
-                payoutForm.style.display = 'none';
-                walletAddressInput.value = '';
-                captcha.checked = false;
-                submitButton.disabled = false;
-                payoutMessage.textContent = '';
-                scoreDisplay.textContent = `Score: ${score}`;
-                pauseButton.textContent = 'Pause';
-                document.getElementById('startButton').textContent = 'Restart Game';
-                animationFrame = requestAnimationFrame(updateGame);
-            }
-        }
-
-        function endGame() {
-            gameActive = false;
-            gameStarted = false;
-            paused = false;
-            cancelAnimationFrame(animationFrame);
-            updateLeaderboard();
-            pauseButton.textContent = 'Pause';
-            drawGameOver();
-        }
-
-        function togglePause() {
-            if (!gameActive) return;
-            paused = !paused;
-            pauseButton.textContent = paused ? 'Resume' : 'Pause';
-            if (!paused) animationFrame = requestAnimationFrame(updateGame);
-        }
-
-        // Input handlers
-        function flap() {
-            if (gameActive && !paused) bird.velocity = JUMP;
-        }
-
-        canvas.addEventListener('click', () => {
-            if (!gameStarted && !gameActive) startGame();
-            else if (!gameActive) startGame();
-            else flap();
-        });
-
-        canvas.addEventListener('touchstart', (event) => {
-            event.preventDefault();
-            if (!gameStarted && !gameActive) startGame();
-            else if (!gameActive) startGame();
-            else flap();
-        });
-
-        // Initialize
-        logo.onload = background.onload = () => drawStartScreen();
-        updateLeaderboard();
-    </script>
-</body>
-</html>
