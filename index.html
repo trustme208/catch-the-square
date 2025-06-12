@@ -240,28 +240,28 @@
             drawBackground();
             drawBird(bird.x, bird.y, 1 + 0.1 * Math.sin(startAnimation * 0.1));
             ctx.font = '40px Caveat';
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(startAnimation / 60, 1)})`;
+            ctx.fillStyle = '40px';
             ctx.textAlign = 'center';
             ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 40);
             ctx.fillText('Click or tap to jump through gaps', canvas.width / 2, canvas.height / 2);
             ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 40);
             startAnimation++;
-            if (!gameStarted) requestAnimationFrame(drawStartScreen);
+            if (!gameStarted) drawGameOver();
         }
 
         function drawGameOver() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
-            drawBird(bird.x, bird.y + Math.sin(gameOverAnimation * 0.2) * 10, 1);
+            drawBird(bird.x, bird.y + Math.sin((20) * 0.2) * 10, 1);
             ctx.font = '40px Caveat';
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(gameOverAnimation / 60, 1)})`;
+            ctx.fillStyle = 'red';
             ctx.textAlign = 'center';
             ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
             ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 20);
             payoutForm.style.display = 'block';
             finalScore.textContent = score;
             payoutAmount.textContent = (score * PAYOUT_RATE).toFixed(2);
-            gameOverAnimation++;
+            gameOverAnimation();
             if (!gameStarted) requestAnimationFrame(drawGameOver);
         }
 
@@ -319,8 +319,8 @@
                     submitButton.disabled = false;
                 }
             } catch (error) {
-                console.error('Payout submission error:', error);
-                payoutMessage.textContent = 'Network error. Please try again.';
+                console.error('Payout error:', error);
+                payoutMessage.textContent = 'Network error. Try again.';
                 payoutSubmitted = false;
                 submitButton.disabled = false;
             }
