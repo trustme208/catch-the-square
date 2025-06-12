@@ -152,12 +152,13 @@
         const PIPE_SPEED = 1.5; // Consistent speed
         const PAYOUT_RATE = 1; // 1 BMN per score point
         const BG_SPEED = 0.5; // Background scroll speed
+        const BG_WIDTH = 711; // Scaled width (1920 * 400 / 1080)
 
         // Load assets
         const logo = new Image();
         logo.src = 'logo.png'; // BMN/CRO logo
         const background = new Image();
-        background.src = 'background.jpg'; // Background image
+        background.src = 'background.jpg'; // 1920x1080 background
 
         // Debugging asset loading
         logo.onerror = () => console.error('Failed to load logo.png. Check file name or path.');
@@ -176,9 +177,9 @@
         // Draw functions
         function drawBackground() {
             if (background.complete && background.naturalWidth !== 0) {
-                // Draw two background images for seamless looping
-                ctx.drawImage(background, bgX, 0, canvas.width, canvas.height);
-                ctx.drawImage(background, bgX + canvas.width, 0, canvas.width, canvas.height);
+                // Draw two background images, scaled to canvas height
+                ctx.drawImage(background, bgX, 0, BG_WIDTH, canvas.height, 0, 0, BG_WIDTH, canvas.height);
+                ctx.drawImage(background, bgX + BG_WIDTH, 0, BG_WIDTH, canvas.height, BG_WIDTH, 0, BG_WIDTH, canvas.height);
             } else {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -186,8 +187,8 @@
             // Update background position
             if (gameActive && !paused) {
                 bgX -= BG_SPEED;
-                if (bgX <= -canvas.width) {
-                    bgX += canvas.width; // Reset to loop
+                if (bgX <= -BG_WIDTH) {
+                    bgX += BG_WIDTH; // Reset to loop
                 }
             }
         }
@@ -375,7 +376,7 @@
             }
         }
 
-        function endGame() {
+덕function endGame() {
             gameActive = false;
             gameStarted = false;
             paused = false;
@@ -422,7 +423,7 @@
 
         // Initialize
         logo.onload = background.onload = () => {
-            drawStartScreen();
+            drawBackground();
         };
         updateLeaderboard();
     </script>
