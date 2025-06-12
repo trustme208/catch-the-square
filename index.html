@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catch the BMN/CRO Logo</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -156,27 +156,20 @@
         const BG_SPEED = 0.5;
         const BG_WIDTH = 711; // Scaled: 1920 * 400 / 1080
 
-        // GitHub API config
-        const GITHUB_TOKEN = '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'; // REPLACE with new token
-        const REPO_OWNER = 'trustme208';
-        const REPO_NAME = 'catch-the-square';
-        const BRANCH = 'payouts';
-        const FILE_PATH = 'payouts.json';
-
         // Load assets
         const logo = new Image();
-        logo.src = 'logo.png';
+        logo.src = '/logo.png';
         const background = new Image();
-        background.src = 'background.jpg';
+        background.src = '/background.jpg';
 
         // Asset error handling
         logo.onerror = () => {
-            console.error('Failed to load logo.png. Check file path or name.');
+            console.error('Failed to load logo.png');
             assetsLoaded++;
             if (assetsLoaded === 2) drawStartScreen();
         };
         background.onerror = () => {
-            console.error('Failed to load background.jpg. Check file path or name.');
+            console.error('Failed to load background.jpg');
             assetsLoaded++;
             if (assetsLoaded === 2) drawStartScreen();
         };
@@ -283,7 +276,7 @@
             ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
         }
 
-        // Payout submission to GitHub
+        // Payout submission
         async function submitPayout() {
             if (payoutSubmitted) {
                 payoutMessage.textContent = 'Payout already submitted!';
@@ -312,57 +305,22 @@
             };
 
             try {
-                // Fetch current payouts.json
-                const getResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}?ref=${BRANCH}`, {
-                    headers: {
-                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
+                const response = await fetch('/api/payout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payoutData)
                 });
-                let content = '[]', sha;
-                if (getResponse.ok) {
-                    const fileData = await getResponse.json();
-                    content = atob(fileData.content);
-                    sha = fileData.sha;
-                } else if (getResponse.status === 404) {
-                    // File doesn't exist, initialize it
-                    console.log('payouts.json not found, creating new file');
+                const data = await response.json();
+                if (response.ok) {
+                    payoutMessage.textContent = data.message;
                 } else {
-                    throw new Error(`GitHub API error: ${getResponse.statusText}`);
-                }
-
-                // Append new payout
-                const payouts = JSON.parse(content);
-                payouts.push(payoutData);
-                const newContent = btoa(JSON.stringify(payouts, null, 2));
-
-                // Update or create payouts.json
-                const putResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: `Add payout for ${address}`,
-                        content: newContent,
-                        branch: BRANCH,
-                        sha: sha // Omit sha if creating new file
-                    })
-                });
-
-                if (putResponse.ok) {
-                    payoutMessage.textContent = 'Payout request submitted!';
-                } else {
-                    const errorData = await putResponse.json();
-                    payoutMessage.textContent = `Error: ${errorData.message || 'Failed to submit payout'}`;
+                    payoutMessage.textContent = `Error: ${data.message}`;
                     payoutSubmitted = false;
                     submitButton.disabled = false;
                 }
             } catch (error) {
                 console.error('Payout submission error:', error);
-                payoutMessage.textContent = 'Network error! Please try again.';
+                payoutMessage.textContent = 'Network error. Please try again.';
                 payoutSubmitted = false;
                 submitButton.disabled = false;
             }
