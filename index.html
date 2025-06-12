@@ -15,7 +15,7 @@
             min-height: 100vh;
             margin: 0;
             font-family: 'Caveat', cursive;
-            background: linear-gradient(to bottom, #0f172a, #4f46e5); /* BMN/CRO crypto theme */
+            background: linear-gradient(to bottom, #0f172a, #4f46e5);
             color: #fff;
         }
         h1 {
@@ -33,7 +33,7 @@
         #gameCanvas {
             border: 3px solid #fff;
             border-radius: 5px;
-            background: #000; /* Fallback if background image fails */
+            background: #000;
         }
         #score {
             font-size: 2em;
@@ -49,7 +49,7 @@
         #startButton, #pauseButton {
             padding: 12px 24px;
             font-size: 1.5em;
-            background: #2563eb; /* BMN/CRO blue */
+            background: #2563eb;
             color: #fff;
             border: none;
             border-radius: 5px;
@@ -105,13 +105,13 @@
         <div id="leaderboard"></div>
         <button id="startButton" onclick="startGame()">Start Game</button>
         <button id="pauseButton" onclick="togglePause()">Pause</button>
-        <p style="font-size: 1.2em; margin-top: 10px;">Click or tap to make the BMN/CRO logo jump through gaps!</p>
+        <p style="font-size: 1.2em; margin-top: 10px;">Click or tap to make the logo jump through gaps!</p>
         <div id="payoutForm">
             <p>Earn 1 BMN per score point!</p>
             <p>Your score: <span id="finalScore"></span> | Payout: <span id="payoutAmount"></span> BMN</p>
             <input type="text" id="walletAddress" placeholder="Enter wallet address (0x...)">
-            <label><input type="checkbox" id="captcha"> I'm not a bot</label>
-            <button onclick="submitPayout()">Claim Payout</button>
+            <label><input type="checkbox" id="checkbox"> I'm not a bot</label>
+            <button id="submitButton" onclick="submitPayout()">Claim Payout</button>
             <p id="payoutMessage"></p>
         </div>
     </div>
@@ -127,7 +127,8 @@
         const finalScore = document.getElementById('finalScore');
         const payoutAmount = document.getElementById('payoutAmount');
         const walletAddressInput = document.getElementById('walletAddress');
-        const captcha = document.getElementById('captcha');
+        const captcha = document.getElementById('checkbox');
+        const submitButton = document.getElementById('submitButton');
         const payoutMessage = document.getElementById('payoutMessage');
 
         // Game state
@@ -135,34 +136,36 @@
         let gameActive = false;
         let gameStarted = false;
         let paused = false;
-        let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 }; // Start in air
+        let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
         let pipes = [];
         let frameCount = 0;
         let animationFrame;
         let startAnimation = 0;
         let gameOverAnimation = 0;
         let payoutSubmitted = false;
-        let bgX = 0; // Background position
+        let bgX = 0;
 
         // Constants
-        const GRAVITY = 0.15; // Minimal bounce
-        const JUMP = -6; // Minimal jump
+        const GRAVITY = 0.15;
+        const JUMP = -6;
         const PIPE_WIDTH = 50;
-        const PIPE_GAP = 220; // Larger gap
-        const PIPE_SPEED = 1.5; // Consistent speed
-        const PAYOUT_RATE = 1; // 1 BMN per score point
-        const BG_SPEED = 0.5; // Background scroll speed
-        const BG_WIDTH = 711; // Scaled width (1920 * 400 / 1080)
+        const PIPE_GAP = 220;
+        const PIPE_SPEED = 1.5;
+        const PAYOUT_RATE = 1;
+        const BG_SPEED = 0.5;
+        const BG_WIDTH = 711; // 1920 * 400 / 1080
+
+        // Backend URL (replace with your deployed server URL)
+        const BACKEND_URL = 'http://localhost:3000/payout';
 
         // Load assets
         const logo = new Image();
-        logo.src = 'logo.png'; // BMN/CRO logo
+        logo.src = 'logo.png';
         const background = new Image();
-        background.src = 'background.jpg'; // 1920x1080 background
+        background.src = 'background.jpg';
 
-        // Debugging asset loading
-        logo.onerror = () => console.error('Failed to load logo.png. Check file name or path.');
-        background.onerror = () => console.error('Failed to load background.jpg. Check file name or path.');
+        logo.onerror = () => console.error('Failed to load logo.png.');
+        background.onerror = () => console.error('Failed to load background.jpg.');
 
         // Leaderboard
         let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
@@ -177,19 +180,15 @@
         // Draw functions
         function drawBackground() {
             if (background.complete && background.naturalWidth !== 0) {
-                // Draw two background images, scaled to canvas height
                 ctx.drawImage(background, bgX, 0, BG_WIDTH, canvas.height, 0, 0, BG_WIDTH, canvas.height);
                 ctx.drawImage(background, bgX + BG_WIDTH, 0, BG_WIDTH, canvas.height, BG_WIDTH, 0, BG_WIDTH, canvas.height);
             } else {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
-            // Update background position
             if (gameActive && !paused) {
                 bgX -= BG_SPEED;
-                if (bgX <= -BG_WIDTH) {
-                    bgX += BG_WIDTH; // Reset to loop
-                }
+                if (bgX <= -BG_WIDTH) bgX += BG_WIDTH;
             }
         }
 
@@ -197,7 +196,7 @@
             if (logo.complete && logo.naturalWidth !== 0) {
                 ctx.save();
                 ctx.translate(x + bird.size / 2, y + bird.size / 2);
-                ctx.rotate(bird.velocity * 0.05); // Subtle tilt
+                ctx.rotate(bird.velocity * 0.05);
                 ctx.drawImage(logo, -bird.size / 2 * scale, -bird.size / 2 * scale, bird.size * scale, bird.size * scale);
                 ctx.restore();
             } else {
@@ -208,16 +207,13 @@
 
         function drawPipes() {
             pipes.forEach(pipe => {
-                const yOffset = Math.sin((frameCount + pipe.x) * 0.05) * 10; // Vertical oscillation
+                const yOffset = Math.sin((frameCount + pipe.x) * 0.05) * 10;
                 const gradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
-                gradient.addColorStop(0, '#1e40af'); // Dark blue
-                gradient.addColorStop(1, '#60a5fa'); // Light blue
+                gradient.addColorStop(0, '#1e40af');
+                gradient.addColorStop(1, '#60a5fa');
                 ctx.fillStyle = gradient;
-                // Top pipe
                 ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top + yOffset);
-                // Bottom pipe
                 ctx.fillRect(pipe.x, pipe.top + PIPE_GAP + yOffset, PIPE_WIDTH, canvas.height - pipe.top - PIPE_GAP);
-                // Shine effect
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.fillRect(pipe.x + 5, 0, 10, pipe.top + yOffset);
                 ctx.fillRect(pipe.x + 5, pipe.top + PIPE_GAP + yOffset, 10, canvas.height - pipe.top - PIPE_GAP);
@@ -226,9 +222,9 @@
 
         function drawStartScreen() {
             drawBackground();
-            drawBird(bird.x, bird.y, 1 + 0.1 * Math.sin(startAnimation * 0.1)); // Pulsing logo
+            drawBird(bird.x, bird.y, 1 + 0.1 * Math.sin(startAnimation * 0.1));
             ctx.font = '40px Caveat';
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(startAnimation / 60, 1)})`; // Fade-in
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(startAnimation / 60, 1)})`;
             ctx.textAlign = 'center';
             ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 40);
             ctx.fillText('Click or tap to jump through gaps', canvas.width / 2, canvas.height / 2);
@@ -239,15 +235,15 @@
 
         function drawGameOver() {
             drawBackground();
-            drawBird(bird.x, bird.y + Math.sin(gameOverAnimation * 0.2) * 10, 1); // Bounce effect
+            drawBird(bird.x, bird.y + Math.sin(gameOverAnimation * 0.2) * 10, 1);
             ctx.font = '40px Caveat';
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(gameOverAnimation / 60, 1)})`; // Fade-in
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(gameOverAnimation / 60, 1)})`;
             ctx.textAlign = 'center';
             ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
             ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 20);
             payoutForm.style.display = 'block';
             finalScore.textContent = score;
-            payoutAmount.textContent = (score * PAYOUT_RATE).toFixed(2); // BMN payout
+            payoutAmount.textContent = (score * PAYOUT_RATE).toFixed(2);
             gameOverAnimation++;
             if (!gameStarted) requestAnimationFrame(drawGameOver);
         }
@@ -263,7 +259,7 @@
         }
 
         // Payout logic
-        function submitPayout() {
+        async function submitPayout() {
             if (payoutSubmitted) {
                 payoutMessage.textContent = 'Payout already submitted!';
                 return;
@@ -278,25 +274,29 @@
                 return;
             }
             payoutSubmitted = true;
-            payoutMessage.textContent = 'Payout request submitted! Processing soon...';
-            // Simulate backend API call
-            console.log('Payout Request:', { address, score, payout: score * PAYOUT_RATE, currency: 'BMN' });
-            // Example: Send to backend (uncomment for real implementation)
-            /*
-            fetch('https://your-backend-api/payout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address, score, payout: score * PAYOUT_RATE, currency: 'BMN' })
-            })
-            .then(response => response.json())
-            .then(data => {
-                payoutMessage.textContent = data.message || 'Payout request submitted!';
-            })
-            .catch(error => {
-                payoutMessage.textContent = 'Error submitting payout!';
-                console.error(error);
-            });
-            */
+            submitButton.disabled = true;
+            payoutMessage.textContent = 'Submitting payout request...';
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address, score, payout: score * PAYOUT_RATE, currency: 'BMN' })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    payoutMessage.textContent = data.message || 'Payout request submitted!';
+                } else {
+                    payoutMessage.textContent = data.message || 'Error submitting payout!';
+                    payoutSubmitted = false;
+                    submitButton.disabled = false;
+                }
+            } catch (error) {
+                payoutMessage.textContent = 'Network error! Please try again.';
+                console.error('Payout submission error:', error);
+                payoutSubmitted = false;
+                submitButton.disabled = false;
+            }
         }
 
         // Game logic
@@ -307,7 +307,7 @@
 
         function updatePipes() {
             pipes.forEach(pipe => {
-                pipe.x -= PIPE_SPEED; // Consistent speed
+                pipe.x -= PIPE_SPEED;
                 if (pipe.x + PIPE_WIDTH < bird.x && !pipe.scored) {
                     score++;
                     scoreDisplay.textContent = `Score: ${score}`;
@@ -318,18 +318,14 @@
         }
 
         function checkCollision() {
-            if (bird.y < 0 || bird.y + bird.size > canvas.height) {
-                return true;
-            }
+            if (bird.y < 0 || bird.y + bird.size > canvas.height) return true;
             for (let pipe of pipes) {
                 const yOffset = Math.sin((frameCount + pipe.x) * 0.05) * 10;
                 if (
                     bird.x + bird.size > pipe.x &&
                     bird.x < pipe.x + PIPE_WIDTH &&
                     (bird.y < pipe.top + yOffset || bird.y + bird.size > pipe.top + PIPE_GAP + yOffset)
-                ) {
-                    return true;
-                }
+                ) return true;
             }
             return false;
         }
@@ -342,11 +338,9 @@
             bird.velocity += GRAVITY;
             bird.y += bird.velocity;
             frameCount++;
-            if (frameCount % 150 === 0) spawnPipe(); // Less frequent pipes
+            if (frameCount % 150 === 0) spawnPipe();
             updatePipes();
-            if (checkCollision()) {
-                endGame();
-            }
+            if (checkCollision()) endGame();
             drawBackground();
             drawPipes();
             drawBird(bird.x, bird.y);
@@ -368,6 +362,7 @@
                 payoutForm.style.display = 'none';
                 walletAddressInput.value = '';
                 captcha.checked = false;
+                submitButton.disabled = false;
                 payoutMessage.textContent = '';
                 scoreDisplay.textContent = `Score: ${score}`;
                 pauseButton.textContent = 'Pause';
@@ -376,7 +371,7 @@
             }
         }
 
-덕function endGame() {
+        function endGame() {
             gameActive = false;
             gameStarted = false;
             paused = false;
@@ -395,36 +390,24 @@
 
         // Input handlers
         function flap() {
-            if (gameActive && !paused) {
-                bird.velocity = JUMP;
-            }
+            if (gameActive && !paused) bird.velocity = JUMP;
         }
 
         canvas.addEventListener('click', () => {
-            if (!gameStarted && !gameActive) {
-                startGame();
-            } else if (!gameActive) {
-                startGame();
-            } else {
-                flap();
-            }
+            if (!gameStarted && !gameActive) startGame();
+            else if (!gameActive) startGame();
+            else flap();
         });
 
         canvas.addEventListener('touchstart', (event) => {
             event.preventDefault();
-            if (!gameStarted && !gameActive) {
-                startGame();
-            } else if (!gameActive) {
-                startGame();
-            } else {
-                flap();
-            }
+            if (!gameStarted && !gameActive) startGame();
+            else if (!gameActive) startGame();
+            else flap();
         });
 
         // Initialize
-        logo.onload = background.onload = () => {
-            drawBackground();
-        };
+        logo.onload = background.onload = () => drawStartScreen();
         updateLeaderboard();
     </script>
 </body>
