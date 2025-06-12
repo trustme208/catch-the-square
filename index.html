@@ -61,6 +61,40 @@
         #startButton:hover, #pauseButton:hover {
             background: #1d4ed8;
         }
+        #payoutForm {
+            display: none;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 5px;
+        }
+        #payoutForm input[type="text"] {
+            padding: 8px;
+            width: 80%;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #fff;
+            font-family: 'Caveat', cursive;
+            font-size: 1.2em;
+        }
+        #payoutForm button {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Caveat', cursive;
+            font-size: 1.2em;
+        }
+        #payoutForm button:hover {
+            background: #1d4ed8;
+        }
+        #payoutMessage {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +106,14 @@
         <button id="startButton" onclick="startGame()">Start Game</button>
         <button id="pauseButton" onclick="togglePause()">Pause</button>
         <p style="font-size: 1.2em; margin-top: 10px;">Click or tap to make the BMN/CRO logo jump through gaps!</p>
+        <div id="payoutForm">
+            <p>Earn 1 BMN per score point!</p>
+            <p>Your score: <span id="finalScore"></span> | Payout: <span id="payoutAmount"></span> BMN</p>
+            <input type="text" id="walletAddress" placeholder="Enter wallet address (0x...)">
+            <label><input type="checkbox" id="captcha"> I'm not a bot</label>
+            <button onclick="submitPayout()">Claim Payout</button>
+            <p id="payoutMessage"></p>
+        </div>
     </div>
 
     <script>
@@ -81,25 +123,35 @@
         const scoreDisplay = document.getElementById('score');
         const leaderboardDisplay = document.getElementById('leaderboard');
         const pauseButton = document.getElementById('pauseButton');
+        const payoutForm = document.getElementById('payoutForm');
+        const finalScore = document.getElementById('finalScore');
+        const payoutAmount = document.getElementById('payoutAmount');
+        const walletAddressInput = document.getElementById('walletAddress');
+        const captcha = document.getElementById('captcha');
+        const payoutMessage = document.getElementById('payoutMessage');
 
         // Game state
         let score = 0;
         let gameActive = false;
         let gameStarted = false;
         let paused = false;
-        let bird = { x: 150, y: canvas.height / 2, size: 40, velocity: 0 }; // Start in air
+        let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 }; // Start in air
         let pipes = [];
         let frameCount = 0;
-        let animationFrame = null;
+        let animationFrame;
         let startAnimation = 0;
         let gameOverAnimation = 0;
+        let payoutSubmitted = false;
+        let bgX = 0; // Background position
 
         // Constants
         const GRAVITY = 0.15; // Minimal bounce
         const JUMP = -6; // Minimal jump
         const PIPE_WIDTH = 50;
-        const PIPE_GAP = 220; // Larger gap for playability
+        const PIPE_GAP = 220; // Larger gap
         const PIPE_SPEED = 1.5; // Consistent speed
+        const PAYOUT_RATE = 1; // 1 BMN per score point
+        const BG_SPEED = 0.5; // Background scroll speed
 
         // Load assets
         const logo = new Image();
@@ -124,10 +176,19 @@
         // Draw functions
         function drawBackground() {
             if (background.complete && background.naturalWidth !== 0) {
-                ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+                // Draw two background images for seamless looping
+                ctx.drawImage(background, bgX, 0, canvas.width, canvas.height);
+                ctx.drawImage(background, bgX + canvas.width, 0, canvas.width, canvas.height);
             } else {
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            // Update background position
+            if (gameActive && !paused) {
+                bgX -= BG_SPEED;
+                if (bgX <= -canvas.width) {
+                    bgX += canvas.width; // Reset to loop
+                }
             }
         }
 
@@ -183,6 +244,9 @@
             ctx.textAlign = 'center';
             ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
             ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 20);
+            payoutForm.style.display = 'block';
+            finalScore.textContent = score;
+            payoutAmount.textContent = (score * PAYOUT_RATE).toFixed(2); // BMN payout
             gameOverAnimation++;
             if (!gameStarted) requestAnimationFrame(drawGameOver);
         }
@@ -195,6 +259,43 @@
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             ctx.textAlign = 'center';
             ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
+        }
+
+        // Payout logic
+        function submitPayout() {
+            if (payoutSubmitted) {
+                payoutMessage.textContent = 'Payout already submitted!';
+                return;
+            }
+            const address = walletAddressInput.value.trim();
+            if (!captcha.checked) {
+                payoutMessage.textContent = 'Please check the CAPTCHA!';
+                return;
+            }
+            if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+                payoutMessage.textContent = 'Invalid wallet address!';
+                return;
+            }
+            payoutSubmitted = true;
+            payoutMessage.textContent = 'Payout request submitted! Processing soon...';
+            // Simulate backend API call
+            console.log('Payout Request:', { address, score, payout: score * PAYOUT_RATE, currency: 'BMN' });
+            // Example: Send to backend (uncomment for real implementation)
+            /*
+            fetch('https://your-backend-api/payout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address, score, payout: score * PAYOUT_RATE, currency: 'BMN' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                payoutMessage.textContent = data.message || 'Payout request submitted!';
+            })
+            .catch(error => {
+                payoutMessage.textContent = 'Error submitting payout!';
+                console.error(error);
+            });
+            */
         }
 
         // Game logic
@@ -257,11 +358,16 @@
                 gameActive = true;
                 paused = false;
                 score = 0;
-                bird = { x: 150, y: canvas.height / 2, size: 40, velocity: 0 };
+                bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
                 pipes = [];
                 frameCount = 0;
                 startAnimation = 0;
                 gameOverAnimation = 0;
+                payoutSubmitted = false;
+                payoutForm.style.display = 'none';
+                walletAddressInput.value = '';
+                captcha.checked = false;
+                payoutMessage.textContent = '';
                 scoreDisplay.textContent = `Score: ${score}`;
                 pauseButton.textContent = 'Pause';
                 document.getElementById('startButton').textContent = 'Restart Game';
