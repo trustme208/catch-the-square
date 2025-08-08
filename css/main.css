@@ -1,0 +1,8 @@
+body { font-family: 'Caveat', cursive; color: #fff; }
+.container { padding: 20px; text-align: center; }
+.bottom-nav { position: fixed; bottom: 0; width: 100%; background: #212121; display: flex; justify-content: space-around; padding: 10px; }
+.bottom-nav a { color: #fff; font-size: 24px; }
+.copy-btn, #submitButton { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-family: 'Caveat', cursive; }
+.copy-btn:hover, #submitButton:hover { background: #1d4ed8; }
+.volume { margin: 20px 0; }
+.links a { color: #60a5fa; margin: 0 10px; }

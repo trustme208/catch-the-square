@@ -1,0 +1,3 @@
+#payoutForm { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 5px; margin-top: 20px; }
+#payoutForm input[type="text"] { padding: 8px; width: 80%; margin: 5px 0; border-radius: 5px; border: 1px solid #fff; font-family: 'Caveat', cursive; font-size: 1.2em; }
+#payoutMessage { color: #fff; font-size: 1.2em; }

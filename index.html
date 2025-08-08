@@ -1,441 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catch the BMN/CRO Logo</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Caveat', cursive;
-            background: linear-gradient(to bottom, #0f172a, #4f46e5);
-            color: #fff;
-        }
-        h1 {
-            font-size: 3em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            margin-bottom: 10px;
-        }
-        #gameContainer {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            text-align: center;
-        }
-        #gameCanvas {
-            border: 3px solid #fff;
-            border-radius: 5px;
-            background: #000;
-        }
-        #score {
-            font-size: 2em;
-            margin: 10px 0;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-        }
-        #leaderboard {
-            margin-top: 15px;
-            font-size: 1.5em;
-            max-width: 300px;
-            text-align: left;
-        }
-        #startButton, #pauseButton {
-            padding: 12px 24px;
-            font-size: 1.5em;
-            background: #2563eb;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin: 5px;
-            font-family: 'Caveat', cursive;
-        }
-        #startButton:hover, #pauseButton:hover {
-            background: #1d4ed8;
-        }
-        #payoutForm {
-            display: none;
-            margin-top: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 15px;
-            border-radius: 5px;
-        }
-        #payoutForm input[type="text"] {
-            padding: 8px;
-            width: 80%;
-            margin: 5px 0;
-            border-radius: 5px;
-            border: 1px solid #fff;
-            font-family: 'Caveat', cursive;
-            font-size: 1.2em;
-        }
-        #payoutForm button {
-            padding: 10px 20px;
-            background: #2563eb;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Caveat', cursive;
-            font-size: 1.2em;
-        }
-        #payoutForm button:hover {
-            background: #1d4ed8;
-        }
-        #payoutMessage {
-            margin-top: 10px;
-            font-size: 1.2em;
-            color: #fff;
-        }
-    </style>
+    <title>Flappy PEPE | Pepecoin themed browser game</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="description" content="Play Flappy PEPE, an exciting remake of Flappy Bird, where you can play as an Pepecoin logo. Join the pepecoin.org project and play this amazing game." />
+    <meta name="keywords" content="Flappy PEPE, Pepecoin, cryptocurrency, crypto game, faucet game, $PEP, â±£EPE, PEPE" />
+    <meta name="theme-color" content="#212121" />
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/assets/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" sizes="180x180">
+    <meta name="author" content="Pepelum Team">
+    <meta name="robots" content="index, follow">
+    <meta name="rating" content="general">
+    <meta name="distribution" content="global">
+    <meta name="revisit-after" content="7 days">
+    <meta name="subject" content="Flappy PEPE | Pepecoin themed browser game">
+    <meta property="og:title" content="Flappy PEPE | Pepecoin themed browser game" />
+    <meta property="og:description" content="Play Flappy PEPE, an exciting remake of Flappy Bird, where you can play as an Pepecoin logo. Join the pepecoin.org project and play this amazing game." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://catch-the-square-five.vercel.app/" />
+    <meta property="og:site_name" content="Flappy PEPE" />
+    <meta property="og:image" content="/assets/android-chrome-512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Flappy PEPE | Pepecoin themed browser game">
+    <meta name="twitter:description" content="Play Flappy PEPE, an exciting remake of Flappy Bird, where you can play as an Pepecoin logo. Join the pepecoin.org project and play this amazing game.">
+    <meta name="twitter:image" content="/assets/android-chrome-512x512.png">
+    <link rel="canonical" href="https://catch-the-square-five.vercel.app/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="/css/fontawesome/css/all.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="/css/reset.css" rel="stylesheet">
+    <link href="/css/main.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/css/game.css">
+    <script src="/js/service.worker.start.js"></script>
+    <link href="/css/settings.css" rel="stylesheet">
 </head>
 <body>
-    <div id="gameContainer">
-        <h1>Catch the BMN/CRO Logo</h1>
-        <div id="score">Score: 0</div>
-        <canvas id="gameCanvas" width="500" height="400"></canvas>
-        <div id="leaderboard"></div>
-        <button id="startButton" onclick="startGame()">Start Game</button>
-        <button id="pauseButton" onclick="togglePause()">Pause</button>
-        <p style="font-size: 1.2em; margin-top: 10px;">Click or tap to make the BMN/CRO logo jump through gaps!</p>
-        <div id="payoutForm">
-            <p>Earn 1 BMN per score point!</p>
-            <p>Your score: <span id="finalScore"></span> | Payout: <span id="payoutAmount"></span> BMN</p>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { height: 100%; background-color: #2c3e50; overflow: hidden; position: relative; }
+        .snowflake { position: absolute; top: -10px; width: 10px; height: 10px; background-color: #fff; border-radius: 50%; opacity: 0.8; animation: fall linear infinite; }
+        @keyframes fall {
+            0% { transform: translateX(0) translateY(0); }
+            100% { transform: translateX(calc(-1 * var(--random-x))) translateY(100vh); }
+        }
+        .snowflake:nth-child(1) { --random-x: calc(100vw * 0.2); animation-duration: 10s; animation-delay: 0s; }
+        .snowflake:nth-child(2) { --random-x: calc(100vw * 0.4); animation-duration: 12s; animation-delay: 2s; }
+        .snowflake:nth-child(3) { --random-x: calc(100vw * 0.6); animation-duration: 8s; animation-delay: 4s; }
+        .snowflake:nth-child(4) { --random-x: calc(100vw * 0.3); animation-duration: 15s; animation-delay: 1s; }
+    </style>
+    <div id="gamecontainer">
+        <div id="gamescreen">
+            <div id="sky" class="animated">
+                <div id="flyarea">
+                    <div id="ceiling" class="animated"></div>
+                    <div id="ceiling2" class="animated"></div>
+                    <div id="ceiling3" class="animated"></div>
+                    <div id="player" class="pepe animated"></div>
+                    <div id="bigscore" class="font-score"></div>
+                    <div id="splash"></div>
+                    <div id="scoreboard">
+                        <h1 class="font-over">GAME OVER</h1>
+                        <div class="card">
+                            <div id="score-label" class="font">SCORE</div>
+                            <div id="score-number" class="font-number">0</div>
+                            <div id="highscore-label" class="font">HIGHSCORE</div>
+                            <div id="highscore-number" class="font-number">0</div>
+                            <div id="replay"><img src="/assets/replay.png" alt="replay"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="land" class="animated">
+            <div id="debug"></div>
+        </div>
+    </div>
+    <div class="boundingbox" id="playerbox"></div>
+    <div class="boundingbox" id="pipebox"></div>
+    <link rel="stylesheet" href="/css/menu.css">
+    <div class="bottom-nav">
+        <a href="/"><i class="fa-solid fa-gamepad"></i></a>
+        <a href="/include/settings.html"><i class="fa-solid fa-bars"></i></a>
+    </div>
+    <div class="container">
+        <h1 id="payout">Highscore: 0</h1>
+        <div id="payoutForm" style="display: none;">
+            <p>Earn 1 PEPE per score point!</p>
+            <p>Your score: <span id="finalScore"></span> | Payout: <span id="payoutAmount"></span> PEPE</p>
             <input type="text" id="walletAddress" placeholder="Enter wallet address (0x...)">
             <label><input type="checkbox" id="captcha"> I'm not a bot</label>
             <button id="submitButton" onclick="submitPayout()">Claim Payout</button>
             <p id="payoutMessage"></p>
         </div>
+        <button class="copy-btn" onclick="window.open('https://pepelum.site/donations/', '_blank')">
+            <i class="fa-solid fa-heart"></i> Support The Game Developer
+        </button>
+        <div class="volume">
+            <label class="text-white" for="volume">Volume: <span id="volume-value">5</span>%</label>
+            <input type="range" id="volume" name="volume" min="0" max="100" value="5">
+        </div>
+        <p class="donate-link">
+            <a href="https://donate.pepelum.site/apps/36n5m4FkoHJP6MP7sXrTsjYM3pQW/crowdfund" target="_blank">Please read this message</a>
+        </p>
+        <hr>
+        <p>Connect with community on <a href="https://pepecoin.org/discord" target="_blank"><strong><em>â±£epe</strong>coin</em></a> discord server.</p>
+        <p class="mt-3 space links">
+            <a href="https://pepecoin.org/" target="_blank" class="mx-2">Pepecoin.org</a>
+            <a href="https://pepelum.site/" target="_blank" class="mx-2">Pepelum.site</a>
+            <a href="https://pepeblocks.com/" target="_blank" class="mx-2">PepeBlocks.com</a>
+            <a href="https://pepecoin-nodes.com/" target="_blank" class="mx-2">Pepecoin-nodes.com</a>
+        </p>
     </div>
-
     <script>
-        // Canvas setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreDisplay = document.getElementById('score');
-        const leaderboardDisplay = document.getElementById('leaderboard');
-        const pauseButton = document.getElementById('pauseButton');
-        const payoutForm = document.getElementById('payoutForm');
-        const finalScore = document.getElementById('finalScore');
-        const payoutAmount = document.getElementById('payoutAmount');
-        const walletAddressInput = document.getElementById('walletAddress');
-        const captcha = document.getElementById('captcha');
-        const submitButton = document.getElementById('submitButton');
-        const payoutMessage = document.getElementById('payoutMessage');
-
-        // Game state
-        let score = 0;
-        let gameActive = false;
-        let gameStarted = false;
-        let paused = false;
-        let startAnimation = 0;
-        let bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
-        let pipes = [];
-        let frameCount = 0;
-        let animationFrame;
-        let gameOverAnimation = 0;
-        let payoutSubmitted = false;
-        let bgX = 0;
-        let assetsLoaded = 0;
-
-        // Constants
-        const GRAVITY = 0.15;
-        const JUMP = -6;
-        const PIPE_WIDTH = 50;
-        const PIPE_GAP = 220;
-        const PIPE_SPEED = 1.5;
-        const PAYOUT_RATE = 1;
-        const BG_SPEED = 0.5;
-        const BG_WIDTH = 711; // Scaled: 1920 * 400 / 1080
-
-        // Load assets
-        const logo = new Image();
-        logo.src = '/logo.png';
-        const background = new Image();
-        background.src = '/background.jpg';
-
-        // Asset error handling
-        logo.onerror = () => {
-            console.error('Failed to load logo.png');
-            assetsLoaded++;
-            if (assetsLoaded === 2) drawStartScreen();
-        };
-        background.onerror = () => {
-            console.error('Failed to load background.jpg');
-            assetsLoaded++;
-            if (assetsLoaded === 2) drawStartScreen();
-        };
-        logo.onload = background.onload = () => {
-            assetsLoaded++;
-            if (assetsLoaded === 2) drawStartScreen();
-        };
-
-        // Leaderboard
-        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-        function updateLeaderboard() {
-            leaderboard.push(score);
-            leaderboard.sort((a, b) => b - a);
-            leaderboard = leaderboard.slice(0, 5);
-            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-            renderLeaderboard();
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
         }
-
-        function renderLeaderboard() {
-            leaderboardDisplay.innerHTML = 'Top Scores:<br>' + leaderboard.map((s, i) => `${i + 1}. ${s}`).join('<br>');
-        }
-
-        // Draw functions
-        function drawBackground() {
-            if (background.complete && background.naturalWidth !== 0) {
-                ctx.drawImage(background, bgX, 0, BG_WIDTH, canvas.height);
-                ctx.drawImage(background, bgX + BG_WIDTH, 0, BG_WIDTH, canvas.height);
-            } else {
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-            if (gameActive && !paused) {
-                bgX -= BG_SPEED;
-                if (bgX <= -BG_WIDTH) bgX += BG_WIDTH;
-            }
-        }
-
-        function drawBird(x, y, scale = 1) {
-            if (logo.complete && logo.naturalWidth !== 0) {
-                ctx.save();
-                ctx.translate(x + bird.size / 2, y + bird.size / 2);
-                ctx.rotate(bird.velocity * 0.05);
-                ctx.drawImage(logo, -bird.size / 2 * scale, -bird.size / 2 * scale, bird.size * scale, bird.size * scale);
-                ctx.restore();
-            } else {
-                ctx.fillStyle = 'red';
-                ctx.fillRect(x, y, bird.size * scale, bird.size * scale);
-            }
-        }
-
-        function drawPipes() {
-            pipes.forEach(pipe => {
-                const yOffset = Math.sin((frameCount + pipe.x) * 0.05) * 10;
-                const gradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
-                gradient.addColorStop(0, '#1e40af');
-                gradient.addColorStop(1, '#60a5fa');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top + yOffset);
-                ctx.fillRect(pipe.x, pipe.top + PIPE_GAP + yOffset, PIPE_WIDTH, canvas.height - pipe.top - PIPE_GAP);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.fillRect(pipe.x + 5, 0, 10, pipe.top + yOffset);
-                ctx.fillRect(pipe.x + 5, pipe.top + PIPE_GAP + yOffset, 10, canvas.height - pipe.top - PIPE_GAP);
-            });
-        }
-
-        function drawStartScreen() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBackground();
-            drawBird(bird.x, bird.y, 1 + 0.1 * Math.sin(startAnimation * 0.1));
-            ctx.font = '40px Caveat';
-            ctx.fillStyle = '40px';
-            ctx.textAlign = 'center';
-            ctx.fillText('Catch the BMN/CRO Logo!', canvas.width / 2, canvas.height / 2 - 40);
-            ctx.fillText('Click or tap to jump through gaps', canvas.width / 2, canvas.height / 2);
-            ctx.fillText('Click to start', canvas.width / 2, canvas.height / 2 + 40);
-            startAnimation++;
-            if (!gameStarted) drawGameOver();
-        }
-
-        function drawGameOver() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBackground();
-            drawBird(bird.x, bird.y + Math.sin((20) * 0.2) * 10, 1);
-            ctx.font = '40px Caveat';
-            ctx.fillStyle = 'red';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
-            ctx.fillText('Click to restart', canvas.width / 2, canvas.height / 2 + 20);
-            payoutForm.style.display = 'block';
-            finalScore.textContent = score;
-            payoutAmount.textContent = (score * PAYOUT_RATE).toFixed(2);
-            gameOverAnimation();
-            if (!gameStarted) requestAnimationFrame(drawGameOver);
-        }
-
-        function drawPauseScreen() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBackground();
-            drawPipes();
-            drawBird(bird.x, bird.y);
-            ctx.font = '40px Caveat';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.textAlign = 'center';
-            ctx.fillText('Paused', canvas.width / 2, canvas.height / 2);
-        }
-
-        // Payout submission
-        async function submitPayout() {
-            if (payoutSubmitted) {
-                payoutMessage.textContent = 'Payout already submitted!';
-                return;
-            }
-            const address = walletAddressInput.value.trim();
-            if (!captcha.checked) {
-                payoutMessage.textContent = 'Please check the CAPTCHA!';
-                return;
-            }
-            if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-                payoutMessage.textContent = 'Invalid wallet address!';
-                return;
-            }
-
-            payoutSubmitted = true;
-            submitButton.disabled = true;
-            payoutMessage.textContent = 'Submitting payout request...';
-
-            const payoutData = {
-                address,
-                score,
-                payout: score * PAYOUT_RATE,
-                currency: 'BMN',
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                const response = await fetch('/api/payout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payoutData)
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    payoutMessage.textContent = data.message;
-                } else {
-                    payoutMessage.textContent = `Error: ${data.message}`;
-                    payoutSubmitted = false;
-                    submitButton.disabled = false;
-                }
-            } catch (error) {
-                console.error('Payout error:', error);
-                payoutMessage.textContent = 'Network error. Try again.';
-                payoutSubmitted = false;
-                submitButton.disabled = false;
-            }
-        }
-
-        // Game logic
-        function spawnPipe() {
-            const gapY = Math.random() * (canvas.height - PIPE_GAP - 100) + 50;
-            pipes.push({ x: canvas.width, top: gapY, scored: false });
-        }
-
-        function updatePipes() {
-            pipes.forEach(pipe => {
-                pipe.x -= PIPE_SPEED;
-                if (pipe.x + PIPE_WIDTH < bird.x && !pipe.scored) {
-                    score++;
-                    scoreDisplay.textContent = `Score: ${score}`;
-                    pipe.scored = true;
-                }
-            });
-            pipes = pipes.filter(pipe => pipe.x + PIPE_WIDTH > 0);
-        }
-
-        function checkCollision() {
-            if (bird.y < 0 || bird.y + bird.size > canvas.height) return true;
-            for (let pipe of pipes) {
-                const yOffset = Math.sin((frameCount + pipe.x) * 0.05) * 10;
-                if (
-                    bird.x + bird.size > pipe.x &&
-                    bird.x < pipe.x + PIPE_WIDTH &&
-                    (bird.y < pipe.top + yOffset || bird.y + bird.size > pipe.top + PIPE_GAP + yOffset)
-                ) return true;
-            }
-            return false;
-        }
-
-        function updateGame() {
-            if (!gameActive || paused) {
-                if (paused) drawPauseScreen();
-                return;
-            }
-            bird.velocity += GRAVITY;
-            bird.y += bird.velocity;
-            frameCount++;
-            if (frameCount % 150 === 0) spawnPipe();
-            updatePipes();
-            if (checkCollision()) endGame();
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBackground();
-            drawPipes();
-            drawBird(bird.x, bird.y);
-            animationFrame = requestAnimationFrame(updateGame);
-        }
-
-        function startGame() {
-            if (!gameStarted) {
-                gameStarted = true;
-                gameActive = true;
-                paused = false;
-                score = 0;
-                bird = { x: 100, y: canvas.height / 2, size: 40, velocity: 0 };
-                pipes = [];
-                frameCount = 0;
-                startAnimation = 0;
-                gameOverAnimation = 0;
-                payoutSubmitted = false;
-                payoutForm.style.display = 'none';
-                walletAddressInput.value = '';
-                captcha.checked = false;
-                submitButton.disabled = false;
-                payoutMessage.textContent = '';
-                scoreDisplay.textContent = `Score: ${score}`;
-                pauseButton.textContent = 'Pause';
-                document.getElementById('startButton').textContent = 'Restart Game';
-                animationFrame = requestAnimationFrame(updateGame);
-            }
-        }
-
-        function endGame() {
-            gameActive = false;
-            gameStarted = false;
-            paused = false;
-            cancelAnimationFrame(animationFrame);
-            updateLeaderboard();
-            pauseButton.textContent = 'Pause';
-            drawGameOver();
-        }
-
-        function togglePause() {
-            if (!gameActive) return;
-            paused = !paused;
-            pauseButton.textContent = paused ? 'Resume' : 'Pause';
-            if (!paused) animationFrame = requestAnimationFrame(updateGame);
-        }
-
-        // Input handlers
-        function flap() {
-            if (gameActive && !paused) bird.velocity = JUMP;
-        }
-
-        canvas.addEventListener('click', () => {
-            if (!gameStarted && !gameActive) startGame();
-            else if (!gameActive) startGame();
-            else flap();
+        const highscore = getCookie('highscore') || 0;
+        document.addEventListener('DOMContentLoaded', () => {
+            const highscoreElement = document.getElementById('highscore-number');
+            if (highscoreElement) highscoreElement.textContent = highscore;
+            const payoutElement = document.getElementById('payout');
+            if (payoutElement) payoutElement.textContent = `Highscore: ${highscore}`;
         });
-
-        canvas.addEventListener('touchstart', (event) => {
-            event.preventDefault();
-            if (!gameStarted && !gameActive) startGame();
-            else if (!gameActive) startGame();
-            else flap();
-        });
-
-        // Initialize
-        renderLeaderboard();
     </script>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.transit.min.js"></script>
+    <script src="/js/buzz.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/refresh.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-09KZY5P5PP"></script>
+    <script async src="/js/gtag.js"></script>
 </body>
 </html>
