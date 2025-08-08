@@ -3,13 +3,7 @@ $(document).ready(function() {
     const ctx = canvas[0].getContext('2d');
     const scoreDisplay = $('#bigscore');
     const leaderboardDisplay = $('#highscore-number');
-    const payoutForm = $('#payoutForm');
-    const finalScore = $('#finalScore');
-    const payoutAmount = $('#payoutAmount');
-    const walletAddressInput = $('#walletAddress');
-    const captcha = $('#captcha');
-    const submitButton = $('#submitButton');
-    const payoutMessage = $('#payoutMessage');
+    const highscoreDisplay = $('#highscore');
     const replayButton = $('#replay');
     const volumeSlider = $('#volume');
     const volumeValue = $('#volume-value');
@@ -24,7 +18,6 @@ $(document).ready(function() {
     let frameCount = 0;
     let animationFrame;
     let gameOverAnimation = 0;
-    let payoutSubmitted = false;
     let bgX = 0;
     let assetsLoaded = 0;
     const GRAVITY = 0.15;
@@ -32,7 +25,6 @@ $(document).ready(function() {
     const PIPE_WIDTH = 50;
     const PIPE_GAP = 220;
     const PIPE_SPEED = 1.5;
-    const PAYOUT_RATE = 1;
     const BG_SPEED = 0.5;
     const BG_WIDTH = 711; // 1920 * 400 / 1080
 
@@ -58,7 +50,7 @@ $(document).ready(function() {
         localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
         document.cookie = `highscore=${leaderboard[0] || 0};path=/`;
         leaderboardDisplay.text(highscore);
-        $('#payout').text(`Highscore: ${leaderboard[0] || 0}`);
+        highscoreDisplay.text(`Highscore: ${leaderboard[0] || 0}`);
     }
 
     function drawBackground() {
@@ -126,57 +118,8 @@ $(document).ready(function() {
         ctx.fillText(`Game Over! Score: ${score}`, canvas.width / 2, canvas.height / 2 - 20);
         $('#scoreboard').show();
         $('#score-number').text(score);
-        payoutForm.show();
-        finalScore.text(score);
-        payoutAmount.text((score * PAYOUT_RATE).toFixed(2));
         gameOverAnimation++;
         if (!gameStarted) requestAnimationFrame(drawGameOver);
-    }
-
-    async function submitPayout() {
-        if (payoutSubmitted) {
-            payoutMessage.text('Payout already submitted!');
-            return;
-        }
-        const address = walletAddressInput.val().trim();
-        if (!captcha.is(':checked')) {
-            payoutMessage.text('Please check the CAPTCHA!');
-            return;
-        }
-        if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-            payoutMessage.text('Invalid wallet address!');
-            return;
-        }
-        payoutSubmitted = true;
-        submitButton.prop('disabled', true);
-        payoutMessage.text('Submitting payout request...');
-        const payoutData = {
-            address,
-            score,
-            payout: score * PAYOUT_RATE,
-            currency: 'PEPE',
-            timestamp: new Date().toISOString()
-        };
-        try {
-            const response = await fetch('/api/payout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payoutData)
-            });
-            const data = await response.json();
-            if (response.ok) {
-                payoutMessage.text(data.message);
-            } else {
-                payoutMessage.text(`Error: ${data.message}`);
-                payoutSubmitted = false;
-                submitButton.prop('disabled', false);
-            }
-        } catch (error) {
-            console.error('Payout error:', error);
-            payoutMessage.text('Network error. Try again.');
-            payoutSubmitted = false;
-            submitButton.prop('disabled', false);
-        }
     }
 
     function spawnPipe() {
@@ -248,12 +191,6 @@ $(document).ready(function() {
             frameCount = 0;
             startAnimation = 0;
             gameOverAnimation = 0;
-            payoutSubmitted = false;
-            payoutForm.hide();
-            walletAddressInput.val('');
-            captcha.prop('checked', false);
-            submitButton.prop('disabled', false);
-            payoutMessage.text('');
             scoreDisplay.text(score);
             $('#score-number').text(score);
             $('#scoreboard').hide();
@@ -297,8 +234,5 @@ $(document).ready(function() {
     volumeSlider.on('input', function() {
         const volume = $(this).val();
         volumeValue.text(volume);
-        // Adjust game audio volume here if using buzz.js
     });
-
-    submitButton.on('click', submitPayout);
 });
