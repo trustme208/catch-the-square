@@ -40,9 +40,11 @@
             y: 320
         };
 
-        // Load logo image
+        // Load images
         var logo = new Image();
         logo.src = '/assets/logo.png';
+        var appleLogo = new Image();
+        appleLogo.src = '/assets/apple.gif';
 
         function getRandomInt(min, max) {
             return Math.floor(Math.random() * (max - min)) + min;
@@ -75,9 +77,13 @@
                 snake.cells.pop();
             }
 
-            // Draw apple
-            context.fillStyle = 'red';
-            context.fillRect(apple.x, apple.y, grid-1, grid-1);
+            // Draw apple as GIF
+            if (appleLogo.complete && appleLogo.naturalWidth !== 0) {
+                context.drawImage(appleLogo, apple.x, apple.y, grid-1, grid-1);
+            } else {
+                context.fillStyle = 'red';
+                context.fillRect(apple.x, apple.y, grid-1, grid-1);
+            }
 
             // Draw snake with logo
             snake.cells.forEach(function(cell, index) {
